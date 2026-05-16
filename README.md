@@ -230,7 +230,7 @@ npm run dev
 
 **11. Jalankan server lokal**
 ```bash
-php artisan serve
+php artisan servea
 ```
 
 Aplikasi dapat diakses di: **http://127.0.0.1:8000**
@@ -257,7 +257,7 @@ Proyek ini dikerjakan oleh tim yang terdiri dari 6 orang:
 | Nama | NIM | Peran |
 |---|---|---|
 | Ahmad Saifuddin Dzaki | 2411102441306 | Project Manager & Lead Developer |
-| Fara Aulia Ananda Gunawan | 2411102441 | Frontend Developer |
+| Fara Aulia Ananda Gunawan | 2411102441076 | Frontend Developer |
 | Muhammad Naufal Putra | 2411102441246 | Backend Developer |
 | Kurnia Dwi Agustina | 2411102441284 | Backend Developer |
 | Ariani Sapto | 2411102441262 | UI/UX Designer & QA Tester |
