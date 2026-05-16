@@ -333,3 +333,5 @@ Proyek ini dibuat untuk keperluan tugas akademik mata kuliah Pemrograman Web.
 <p align="center">
   Dibuat oleh Kelompok 7 LibraryMS | Mata Kuliah Pemrograman Web
 </p>
+
+> Dokumentasi ini diperbarui oleh Satriani sebagai QA & Docs pada progress Minggu 1
