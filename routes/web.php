@@ -27,6 +27,10 @@ Route::prefix('admin')
         Route::get('/dashboard', [Admin\DashboardController::class, 'index'])
             ->name('dashboard');
 
+        // API Pencarian Buku Google Books
+        Route::get('/books/search-api', [Admin\BookController::class, 'searchGoogleBooks'])
+            ->name('books.search-api');
+
         // Buku
         Route::resource('books', Admin\BookController::class);
 
