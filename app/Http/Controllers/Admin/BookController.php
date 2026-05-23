@@ -117,4 +117,70 @@ class BookController extends Controller
         return redirect()->route('admin.books.index')
             ->with('success', 'Buku berhasil dihapus.');
     }
+
+    
+     // Integrasi API Google Books untuk pencarian data buku otomatis.
+    public function searchGoogleBooks(Request $request)
+    {
+        $query = $request->get('q');
+
+        if (!$query) {
+            return response()->json([
+                'error' => 'Query pencarian tidak boleh kosong'
+            ], 400);
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                ->withHeaders([
+                    'Referer' => config('app.url'),
+                ])
+                ->get('https://www.googleapis.com/books/v1/volumes', [
+                    'q'          => $query,
+                    'maxResults' => 8,
+                    'printType'  => 'books',
+                    'key'        => env('GOOGLE_BOOKS_API_KEY', ''),
+                ]);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'error' => 'Gagal mengambil data dari Google Books'
+                ], 500);
+            }
+
+            $items = $response->json('items') ?? [];
+
+            $books = collect($items)->map(function ($item) {
+                $info = $item['volumeInfo'] ?? [];
+                return [
+                    'title'          => $info['title'] ?? '',
+                    'author'         => isset($info['authors'])
+                                            ? implode(', ', $info['authors'])
+                                            : '',
+                    'publisher'      => $info['publisher'] ?? '',
+                    'published_year' => isset($info['publishedDate'])
+                                            ? substr($info['publishedDate'], 0, 4)
+                                            : '',
+                    'isbn'           => collect($info['industryIdentifiers'] ?? [])
+                                            ->firstWhere('type', 'ISBN_13')['identifier']
+                                            ?? collect($info['industryIdentifiers'] ?? [])
+                                            ->firstWhere('type', 'ISBN_10')['identifier']
+                                            ?? '',
+                    'description'    => isset($info['description'])
+                                            ? substr($info['description'], 0, 500)
+                                            : '',
+                    'cover'          => $info['imageLinks']['thumbnail']
+                                            ?? $info['imageLinks']['smallThumbnail']
+                                            ?? '',
+                ];
+            })->filter(fn($book) => !empty($book['title']))->values();
+
+            return response()->json(['books' => $books]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Koneksi ke Google Books gagal: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
