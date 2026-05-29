@@ -1,7 +1,7 @@
 # LibraryMS — Library Management System
 
 # Deskripsi Singkat
-  Sistem manajemen perpustakaan digital berbasis web yang dibangun menggunakan Laravel 11.
+  Sistem manajemen perpustakaan digital berbasis web yang dibangun menggunakan Laravel 12.
   Memungkinkan admin mengelola buku, anggota, dan peminjaman secara efisien,
   serta memudahkan anggota dalam mencari dan meminjam buku secara online.
 
@@ -59,10 +59,11 @@
 
 | Komponen | Teknologi |
 |---|---|
-| Backend Framework | Laravel 11 |
+| Backend Framework | Laravel 12 |
 | Authentication | Laravel Breeze |
 | Frontend Styling | Tailwind CSS 3 |
 | Database | MySQL 8.0 |
+| Google Books API  | Pencarian & pengisian data buku otomatis  |
 | Chart / Visualisasi | Chart.js |
 | Server Lokal | PHP Built-in / Laragon / XAMPP |
 | Version Control | Git + GitHub |
@@ -196,7 +197,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-**6. Konfigurasi database**
+**6. Konfigurasi database dan Konfigurasi Google Books API**
 
 Buka file `.env` dan sesuaikan:
 ```env
@@ -206,7 +207,16 @@ DB_PORT=3306
 DB_DATABASE=library_management
 DB_USERNAME=root
 DB_PASSWORD=
+GOOGLE_BOOKS_API_KEY=isi_dengan_api_key_kamu
 ```
+
+Cara mendapatkan API key (gratis):
+1. Buka console.cloud.google.com
+2. Buat project baru → aktifkan **Books API**
+3. Buat credentials → pilih **API Key**
+4. Copy dan paste ke `.env`
+
+> Tanpa API key, fitur pencarian buku otomatis di halaman Tambah Buku tidak akan berfungsi. Fitur lain tetap berjalan normal.
 
 **7. Jalankan migrasi database**
 ```bash
@@ -230,7 +240,7 @@ npm run dev
 
 **11. Jalankan server lokal**
 ```bash
-php artisan servea
+php artisan serve
 ```
 
 Aplikasi dapat diakses di: **http://127.0.0.1:8000**
@@ -285,25 +295,25 @@ Proyek ini dikerjakan oleh tim yang terdiri dari 6 orang:
 - [x] Migrasi tabel: `categories`, `books`, `borrowings`
 - [x] Tambah kolom `role`, `phone`, `address` ke tabel `users`
 - [x] Desain UI Figma — Dashboard Admin
-- [ ] Desain UI Figma — semua halaman (10 Admin + 4 Member)
-- [ ] Setup repository GitHub & branch strategy
-- [ ] Dokumentasi README.md
+- [x] Desain UI Figma — semua halaman (10 Admin + 4 Member)
+- [x] Setup repository GitHub & branch strategy
+- [x] Dokumentasi README.md
 
 ### Minggu 2 — Backend Development
-- [ ] Model + Eloquent relationships (User, Book, Category, Borrowing)
-- [ ] CRUD Kategori (Admin)
-- [ ] CRUD Buku dengan upload cover (Admin)
-- [ ] CRUD Anggota (Admin)
-- [ ] Sistem pengajuan & approval peminjaman
-- [ ] Role middleware (admin vs member)
-- [ ] Database seeder (data dummy)
+- [x] Model + Eloquent relationships (User, Book, Category, Borrowing)
+- [x] CRUD Kategori (Admin)
+- [x] CRUD Buku dengan upload cover (Admin)
+- [x] CRUD Anggota (Admin)
+- [x] Sistem pengajuan & approval peminjaman
+- [x] Role middleware (admin vs member)
+- [x] Database seeder (data dummy)
 
 ### Minggu 3 — Frontend & Integrasi
-- [ ] Layout admin (sidebar, topbar, responsive)
-- [ ] Layout member (navbar, footer)
-- [ ] Semua halaman Blade views
-- [ ] Integrasi Chart.js di halaman laporan
-- [ ] Search & filter buku
+- [x] Layout admin (sidebar, topbar, responsive)
+- [x] Layout member (navbar, footer)
+- [x] Semua halaman Blade views
+- [x] Integrasi Chart.js di halaman laporan
+- [x] Search & filter buku
 
 ### Minggu 4 — Testing & Deployment
 - [ ] QA testing semua fitur
@@ -334,4 +344,4 @@ Proyek ini dibuat untuk keperluan tugas akademik mata kuliah Pemrograman Web.
   Dibuat oleh Kelompok 7 LibraryMS | Mata Kuliah Pemrograman Web
 </p>
 
-> Dokumentasi ini diperbarui oleh Satriani sebagai QA & Docs pada progress Minggu 1
+> Dokumentasi ini diperbarui oleh Satriani sebagai QA & Docs
