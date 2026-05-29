@@ -8,6 +8,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\Book;
+use App\Models\Borrowing;
+use App\Models\Category;
+use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -16,7 +20,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View
     {
-        return view('auth.login');
+        $totalBooks = Book::count();
+        $activeMembers = User::where('role', 'member')->count();
+        $borrowed = Borrowing::whereIn('status', ['approved', 'overdue'])->count();
+        $categories = Category::count();
+
+        return view('auth.login', compact('totalBooks', 'activeMembers', 'borrowed', 'categories'));
     }
 
     /**
@@ -28,7 +37,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = auth()->user();
+        return redirect()->intended(
+            $user->isAdmin()
+                ? route('admin.dashboard')
+                : route('member.catalog')
+        );
     }
 
     /**
