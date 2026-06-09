@@ -73,7 +73,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Kategori <span class="text-red-400">*</span></label>
-                    <select name="category_id" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400 @error('category_id') border-red-400 @enderror">
+                    <select name="category_id" id="field-category" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400 @error('category_id') border-red-400 @enderror">
                         <option value="">Pilih kategori</option>
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -97,10 +97,18 @@
 
                 <div class="sm:col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Cover Buku</label>
-                    <input type="hidden" name="cover_url" id="field-cover-url">
-                    <div id="cover-preview" class="hidden mb-3">
-                        <img id="cover-img" src="" class="w-24 h-36 rounded-lg object-cover border border-slate-200 shadow-sm">
-                        <p class="text-xs text-sky-600 font-medium mt-1">✓ Berhasil memuat cover dari Google Books</p>
+                    <input type="hidden" name="cover_url" id="field-cover-url" value="{{ old('cover_url') }}">
+                    <div id="cover-preview" class="hidden mb-3 flex items-center gap-3">
+                        <div class="relative">
+                            <img id="cover-img" src="" class="w-24 h-36 rounded-lg object-cover border border-slate-200 shadow-sm" onerror="this.classList.add('hidden'); document.getElementById('cover-img-error')?.classList.remove('hidden');">
+                            <div id="cover-img-error" class="hidden w-24 h-36 rounded-lg border border-slate-200 shadow-sm bg-sky-50 flex items-center justify-center">
+                                <i class="ti ti-alert-circle text-slate-400 text-lg"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-sky-600 font-medium">✓ Berhasil memuat cover</p>
+                            <p class="text-xs text-slate-400 mt-1">dari Google Books API</p>
+                        </div>
                     </div>
                     <input type="file" name="cover_image" accept="image/*"
                         class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100">
@@ -153,7 +161,7 @@ async function searchGoogleBooks() {
                     <div class="min-w-0">
                         <div class="text-xs font-semibold text-slate-800 leading-tight line-clamp-2">${book.title}</div>
                         <div class="text-[11px] text-slate-500 mt-0.5 truncate">${book.author || '-'}</div>
-                        <div class="text-[10px] text-slate-400">${book.published_year || ''}</div>
+                        <div class="text-[10px] text-slate-400">${book.published_year || ''}${book.category ? ' · ' + book.category : ''}</div>
                     </div>
                 </div>`;
         });
@@ -172,6 +180,17 @@ function fillForm(book) {
     document.getElementById('field-isbn').value        = book.isbn || '';
     document.getElementById('field-year').value        = book.published_year || '';
     document.getElementById('field-description').value = book.description || '';
+
+    if (book.category) {
+        const categorySelect = document.getElementById('field-category');
+        const match = Array.from(categorySelect.options).find(option =>
+            option.textContent.trim().toLowerCase() === book.category.toLowerCase()
+        );
+        if (match) {
+            categorySelect.value = match.value;
+        }
+    }
+
     if (book.cover) {
         document.getElementById('field-cover-url').value = book.cover;
         document.getElementById('cover-img').src = book.cover;
@@ -182,6 +201,14 @@ function fillForm(book) {
 
 document.getElementById('google-search').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); searchGoogleBooks(); }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    const coverUrl = document.getElementById('field-cover-url').value;
+    if (coverUrl) {
+        document.getElementById('cover-img').src = coverUrl;
+        document.getElementById('cover-preview').classList.remove('hidden');
+    }
 });
 </script>
 @endpush

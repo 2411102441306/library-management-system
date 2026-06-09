@@ -19,6 +19,7 @@ class Book extends Model
         'description',
         'stock',
         'cover_image',
+        'cover_url',
     ];
 
     // ─── Helpers ───────────────────────────────────────────
@@ -29,9 +30,15 @@ class Book extends Model
 
     public function getCoverUrlAttribute(): string
     {
-        return $this->cover_image
-            ? asset('storage/' . $this->cover_image)
-            : asset('images/default-cover.png');
+        if ($this->cover_image) {
+            return asset('storage/' . $this->cover_image);
+        }
+
+        if (!empty($this->attributes['cover_url'])) {
+            return $this->attributes['cover_url'];
+        }
+
+        return asset('images/default-cover.png');
     }
 
     // ─── Relationships ──────────────────────────────────────

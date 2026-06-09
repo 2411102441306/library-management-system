@@ -10,12 +10,17 @@
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div class="flex gap-0">
             <!-- Cover -->
-            <div class="w-52 flex-shrink-0 flex items-center justify-center p-6" style="background:#F0F9FF">
-                @if($book->cover_image)
-                    <img src="{{ $book->cover_url }}" class="w-full rounded-xl shadow-md object-cover">
+            <div class="w-56 flex-shrink-0 flex items-center justify-center p-4">
+                @if($book->cover_image || $book->cover_url)
+                    <div class="relative w-full">
+                        <img src="{{ $book->cover_url }}" class="w-full h-80 rounded-lg shadow-lg object-cover transition-all group-hover:shadow-xl" alt="{{ $book->title }}" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                        <div class="hidden w-full h-80 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-50 to-blue-50 shadow-lg">
+                            <i class="ti ti-book text-7xl" style="color:#0EA5E9"></i>
+                        </div>
+                    </div>
                 @else
-                    <div class="w-full h-64 rounded-xl flex items-center justify-center" style="background:#E0F2FE">
-                        <i class="ti ti-book text-6xl" style="color:#0EA5E9"></i>
+                    <div class="w-full h-80 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-50 to-blue-50 shadow-lg">
+                        <i class="ti ti-book text-7xl" style="color:#0EA5E9"></i>
                     </div>
                 @endif
             </div>

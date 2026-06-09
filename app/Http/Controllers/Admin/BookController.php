@@ -53,11 +53,15 @@ class BookController extends Controller
             'stock'          => 'required|integer|min:0',
             'category_id'    => 'required|exists:categories,id',
             'cover_image'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'cover_url'      => 'nullable|url|max:255',
         ]);
 
         if ($request->hasFile('cover_image')) {
             $validated['cover_image'] = $request->file('cover_image')
                 ->store('covers', 'public');
+            $validated['cover_url'] = null;
+        } elseif ($request->filled('cover_url')) {
+            $validated['cover_url'] = $request->input('cover_url');
         }
 
         Book::create($validated);
@@ -84,15 +88,20 @@ class BookController extends Controller
             'stock'          => 'required|integer|min:0',
             'category_id'    => 'required|exists:categories,id',
             'cover_image'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'cover_url'      => 'nullable|url|max:255',
         ]);
 
         if ($request->hasFile('cover_image')) {
-            // Hapus cover lama jika ada
             if ($book->cover_image) {
                 Storage::disk('public')->delete($book->cover_image);
             }
             $validated['cover_image'] = $request->file('cover_image')
                 ->store('covers', 'public');
+            $validated['cover_url'] = null;
+        } elseif ($request->filled('cover_url')) {
+            $validated['cover_url'] = $request->input('cover_url');
+        } else {
+            unset($validated['cover_url']);
         }
 
         $book->update($validated);
@@ -103,9 +112,9 @@ class BookController extends Controller
 
     public function destroy(Book $book)
     {
-        // Cegah hapus buku yang sedang dipinjam
+        // Cegah hapus buku yang masih punya peminjaman aktif
         if ($book->borrowings()->whereIn('status', ['pending', 'approved', 'overdue'])->exists()) {
-            return back()->with('error', 'Buku tidak dapat dihapus karena sedang dipinjam.');
+            return back()->with('error', 'Buku tidak dapat dihapus karena masih memiliki peminjaman aktif.');
         }
 
         if ($book->cover_image) {
@@ -169,6 +178,7 @@ class BookController extends Controller
                     'description'    => isset($info['description'])
                                             ? substr($info['description'], 0, 500)
                                             : '',
+                    'category'       => isset($info['categories'][0]) ? $info['categories'][0] : '',
                     'cover'          => $info['imageLinks']['thumbnail']
                                             ?? $info['imageLinks']['smallThumbnail']
                                             ?? '',

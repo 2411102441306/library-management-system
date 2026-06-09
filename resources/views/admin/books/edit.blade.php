@@ -54,10 +54,18 @@
                 </div>
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Cover Buku</label>
-                    @if($book->cover_image)
-                        <div class="mb-2 flex items-center gap-3">
-                            <img src="{{ $book->cover_url }}" class="w-16 h-20 rounded object-cover border border-slate-200">
-                            <span class="text-xs text-slate-500">Cover saat ini</span>
+                    @if($book->cover_image || $book->cover_url)
+                        <div class="mb-3 flex items-center gap-3">
+                            <div class="relative">
+                                <img src="{{ $book->cover_url }}" class="w-16 h-20 rounded object-cover border border-slate-200 shadow-sm" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                                <div class="hidden w-16 h-20 rounded border border-slate-200 shadow-sm bg-sky-50 flex items-center justify-center">
+                                    <i class="ti ti-alert-circle text-slate-300 text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-500">
+                                <p class="font-medium">Cover saat ini</p>
+                                <p class="text-slate-400 mt-0.5">{{ $book->cover_image ? 'File lokal' : 'URL dari API' }}</p>
+                            </div>
                         </div>
                     @endif
                     <input type="file" name="cover_image" accept="image/*"

@@ -81,11 +81,14 @@
             style="{{ $isOverdue ? 'border-left: 4px solid #EF4444' : '' }}">
             <div class="flex items-center gap-4 p-4">
                 <!-- Cover -->
-                <div class="w-12 h-16 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden" style="background:#F0F9FF">
-                    @if($borrow->book->cover_image)
-                        <img src="{{ $borrow->book->cover_url }}" class="w-full h-full object-cover">
+                <div class="w-20 h-28 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-sky-50 to-blue-50">
+                    @if($borrow->book->cover_image || $borrow->book->cover_url)
+                        <img src="{{ $borrow->book->cover_url }}" class="w-full h-full object-cover" alt="{{ $borrow->book->title }}" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                        <div class="hidden w-full h-full flex items-center justify-center bg-gradient-to-br from-sky-50 to-blue-50">
+                            <i class="ti ti-book text-xl" style="color:#BAE6FD"></i>
+                        </div>
                     @else
-                        <i class="ti ti-book text-2xl" style="color:#BAE6FD"></i>
+                        <i class="ti ti-book text-xl" style="color:#BAE6FD"></i>
                     @endif
                 </div>
 

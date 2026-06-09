@@ -36,11 +36,14 @@
         @forelse($books as $book)
         <div class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md hover:border-sky-200 transition-all group">
             <!-- Cover -->
-            <div class="h-48 flex items-center justify-center overflow-hidden" style="background:#F0F9FF">
-                @if($book->cover_image)
-                    <img src="{{ $book->cover_url }}" class="h-full w-full object-cover">
+            <div class="h-56 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-50 to-blue-50">
+                @if($book->cover_image || $book->cover_url)
+                    <img src="{{ $book->cover_url }}" class="h-full w-full object-cover" alt="{{ $book->title }}" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                    <div class="hidden h-full w-full flex items-center justify-center bg-gradient-to-br from-sky-50 to-blue-50">
+                        <i class="ti ti-book text-6xl" style="color:#BAE6FD"></i>
+                    </div>
                 @else
-                    <i class="ti ti-book text-5xl" style="color:#BAE6FD"></i>
+                    <i class="ti ti-book text-6xl" style="color:#BAE6FD"></i>
                 @endif
             </div>
             <!-- Info -->

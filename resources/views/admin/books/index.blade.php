@@ -59,8 +59,11 @@
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-5 py-4"><input type="checkbox" class="rounded border-slate-300"></td>
                     <td class="px-5 py-4">
-                        @if($book->cover_image)
-                            <img src="{{ $book->cover_url }}" class="w-9 h-11 rounded object-cover">
+                        @if($book->cover_image || $book->cover_url)
+                            <img src="{{ $book->cover_url }}" class="w-9 h-11 rounded object-cover border border-slate-100" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                            <div class="hidden w-9 h-11 rounded flex items-center justify-center" style="background:#E0F2FE">
+                                <i class="ti ti-book text-sm" style="color:#0EA5E9"></i>
+                            </div>
                         @else
                             <div class="w-9 h-11 rounded flex items-center justify-center" style="background:#E0F2FE">
                                 <i class="ti ti-book text-base" style="color:#0EA5E9"></i>
