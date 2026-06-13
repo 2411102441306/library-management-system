@@ -5,6 +5,27 @@
 
 @section('content')
 <div class="pt-2">
+    <div class="grid gap-3 mb-5 lg:grid-cols-3">
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+            <div class="text-xs font-semibold uppercase tracking-wide text-rose-600">Denda menunggu lunas</div>
+            <div class="mt-2 text-2xl font-bold text-rose-900">{{ $counts['fine_pending'] }}</div>
+            <div class="mt-1 text-sm text-rose-700">Bisa diselesaikan dengan tombol tandai denda lunas.</div>
+        </div>
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <div class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Denda sudah lunas</div>
+            <div class="mt-2 text-2xl font-bold text-emerald-900">{{ $counts['fine_settled'] }}</div>
+            <div class="mt-1 text-sm text-emerald-700">Status ini tetap menyimpan histori, tapi peringatan tidak lagi muncul.</div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Alur singkat</div>
+            <div class="mt-2 text-sm leading-6 text-slate-600">
+                1. Buku dikembalikan atau dinyatakan hilang.
+                2. Denda dihitung otomatis.
+                3. Admin menandai denda lunas setelah pembayaran selesai.
+            </div>
+        </div>
+    </div>
+
     <div class="flex items-center gap-1 mb-5 bg-white border border-slate-200 rounded-xl p-1 w-fit shadow-sm overflow-x-auto max-w-full">
         @php
             $tabs = [
@@ -95,9 +116,11 @@
                             @endif
                         </td>
 
-                        <td class="px-5 py-4 text-sm whitespace-nowrap {{ $borrow->fine_amount > 0 ? 'font-semibold' : 'text-slate-500' }}" style="{{ $borrow->fine_amount > 0 ? 'color:#B91C1C' : '' }}">
-                            @if($borrow->fine_amount > 0)
-                                {{ $borrow->status === 'lost' ? 'Denda hilang' : 'Denda terlambat' }}: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
+                        <td class="px-5 py-4 text-sm whitespace-nowrap {{ $borrow->outstanding_fine_amount > 0 ? 'font-semibold' : 'text-slate-500' }}" style="{{ $borrow->outstanding_fine_amount > 0 ? 'color:#B91C1C' : '' }}">
+                            @if($borrow->outstanding_fine_amount > 0)
+                                {{ $borrow->status === 'lost' ? 'Denda hilang' : 'Denda terlambat' }}: Rp {{ number_format($borrow->outstanding_fine_amount, 0, ',', '.') }}
+                            @elseif($borrow->fine_amount > 0)
+                                Lunas: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
                             @else
                                 -
                             @endif
@@ -118,7 +141,22 @@
                         </td>
 
                         <td class="px-5 py-4 text-sm whitespace-nowrap">
-                            @if($borrow->due_soon_warning)
+                            @if($borrow->hasOutstandingFine() && $borrow->hasFineProof())
+                                <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                                    <i class="ti ti-receipt text-xs"></i>
+                                    Bukti terkirim
+                                </span>
+                            @elseif($borrow->hasOutstandingFine())
+                                <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                                    <i class="ti ti-receipt-2 text-xs"></i>
+                                    Denda belum lunas
+                                </span>
+                            @elseif($borrow->fine_amount > 0)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                    <i class="ti ti-badge-check text-xs"></i>
+                                    Denda lunas
+                                </span>
+                            @elseif($borrow->due_soon_warning)
                                 <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
                                     <i class="ti ti-alert-triangle text-xs"></i>
                                     Hampir jatuh tempo
@@ -170,8 +208,18 @@
                                         @csrf @method('PATCH')
                                         <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all hover:bg-rose-50 shadow-sm whitespace-nowrap" style="border-color:#EF4444;color:#EF4444">Tandai Hilang</button>
                                     </form>
+                                @elseif(in_array($borrow->status, ['returned', 'lost']) && $borrow->hasOutstandingFine())
+                                    @if($borrow->hasFineProof())
+                                        <a href="{{ route('admin.borrowings.fine-proof', $borrow) }}" target="_blank" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all hover:bg-amber-50 shadow-sm whitespace-nowrap" style="border-color:#B45309;color:#B45309">Lihat Bukti</a>
+                                        <form method="POST" action="{{ route('admin.borrowings.settle-fine', $borrow) }}">
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all hover:bg-emerald-50 shadow-sm whitespace-nowrap" style="border-color:#15803D;color:#15803D">Verifikasi & Lunas</button>
+                                        </form>
+                                    @else
+                                        <span class="text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded whitespace-nowrap">Menunggu bukti</span>
+                                    @endif
                                 @else
-                                    <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-1 rounded whitespace-nowrap">Selesai</span>
+                                    <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-1 rounded whitespace-nowrap">{{ $borrow->fine_amount > 0 ? 'Denda lunas' : 'Selesai' }}</span>
                                 @endif
                             </div>
                         </td>

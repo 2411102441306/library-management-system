@@ -22,6 +22,9 @@ class Borrowing extends Model
         'loan_days',
         'penalty_amount',
         'return_date',
+        'fine_proof_path',
+        'fine_proof_submitted_at',
+        'fine_settled_at',
         'status',
         'notes',
     ];
@@ -32,6 +35,8 @@ class Borrowing extends Model
         'return_date' => 'date',
         'loan_days'   => 'integer',
         'penalty_amount' => 'integer',
+        'fine_proof_submitted_at' => 'datetime',
+        'fine_settled_at' => 'datetime',
     ];
 
     // ─── Helpers ───────────────────────────────────────────
@@ -72,6 +77,66 @@ class Borrowing extends Model
         }
 
         return $this->days_late * (int) AppSetting::borrowingPolicy()['daily_fine'];
+    }
+
+    public function getOutstandingFineAmountAttribute(): int
+    {
+        if ($this->isFineSettled()) {
+            return 0;
+        }
+
+        return $this->fine_amount;
+    }
+
+    public function isFineSettled(): bool
+    {
+        return !is_null($this->fine_settled_at);
+    }
+
+    public function hasOutstandingFine(): bool
+    {
+        return in_array($this->status, ['returned', 'lost'], true)
+            && $this->fine_amount > 0
+            && !$this->isFineSettled();
+    }
+
+    public function hasFineProof(): bool
+    {
+        return filled($this->fine_proof_path);
+    }
+
+    public function getFineStatusLabelAttribute(): string
+    {
+        if ($this->hasOutstandingFine() && $this->hasFineProof()) {
+            return 'Bukti terkirim';
+        }
+
+        if ($this->hasOutstandingFine()) {
+            return 'Belum lunas';
+        }
+
+        if ($this->fine_amount > 0) {
+            return 'Lunas';
+        }
+
+        return '-';
+    }
+
+    public function getFineStatusColorAttribute(): array
+    {
+        if ($this->hasOutstandingFine() && $this->hasFineProof()) {
+            return ['#FEF3C7', '#B45309'];
+        }
+
+        if ($this->hasOutstandingFine()) {
+            return ['#FEE2E2', '#B91C1C'];
+        }
+
+        if ($this->fine_amount > 0) {
+            return ['#DCFCE7', '#15803D'];
+        }
+
+        return ['#F3F4F6', '#6B7280'];
     }
 
     public function getPenaltyTypeAttribute(): string

@@ -59,7 +59,7 @@ class CatalogController extends Controller
             'notes'     => ['nullable', 'string', 'max:1000'],
             'loan_days' => ['nullable', 'integer', 'min:' . $borrowPolicy['min_days'], 'max:' . $borrowPolicy['max_days']],
         ]);
-        $loanDays = $validated['loan_days'] ?? $borrowPolicy['default_days'];
+        $loanDays = (int) ($validated['loan_days'] ?? $borrowPolicy['default_days']);
 
         // Validasi stok
         if ($book->stock <= 0) {

@@ -56,6 +56,10 @@ Route::prefix('admin')
             ->name('borrowings.return');
         Route::patch('/borrowings/{borrowing}/lost', [Admin\BorrowingController::class, 'markLost'])
             ->name('borrowings.lost');
+        Route::patch('/borrowings/{borrowing}/settle-fine', [Admin\BorrowingController::class, 'settleFine'])
+            ->name('borrowings.settle-fine');
+        Route::get('/borrowings/{borrowing}/fine-proof', [Admin\BorrowingController::class, 'viewFineProof'])
+            ->name('borrowings.fine-proof');
 
         // Kategori
         Route::get('/categories', [Admin\CategoryController::class, 'index'])
@@ -95,4 +99,6 @@ Route::prefix('member')
         // Riwayat Peminjaman
         Route::get('/history', [Member\BorrowingHistoryController::class, 'index'])
             ->name('history');
+        Route::post('/history/{borrowing}/fine-proof', [Member\BorrowingHistoryController::class, 'uploadFineProof'])
+            ->name('history.fine-proof');
     });

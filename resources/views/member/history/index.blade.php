@@ -41,6 +41,21 @@
             </div>
         </div>
 
+        <div class="mt-5 grid gap-3 lg:grid-cols-3">
+            <div class="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
+                <div class="font-semibold text-sky-900">1. Status pinjaman</div>
+                <p class="mt-1 leading-6">Aktif, terlambat, hilang, atau selesai ditampilkan jelas di setiap kartu.</p>
+            </div>
+            <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+                <div class="font-semibold text-rose-900">2. Denda belum lunas</div>
+                <p class="mt-1 leading-6">Kalau masih ada denda, kartu akan menampilkan peringatan supaya Anda tahu masih perlu tindak lanjut.</p>
+            </div>
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                <div class="font-semibold text-emerald-900">3. Denda lunas</div>
+                <p class="mt-1 leading-6">Setelah admin menandai lunas, peringatan hilang dan yang tampil hanya histori penyelesaiannya.</p>
+            </div>
+        </div>
+
         <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
             <div class="flex items-start gap-3">
                 <i class="ti ti-shield-alert mt-0.5 text-lg text-rose-600"></i>
@@ -94,7 +109,7 @@
                 default    => ['#F3F4F6','#6B7280','Ditolak'],
             };
         @endphp
-        <article class="member-surface overflow-hidden {{ ($isOverdue || $borrow->status === 'lost') ? 'ring-1 ring-rose-200' : '' }}">
+        <article class="member-surface overflow-hidden {{ ($isOverdue || $borrow->status === 'lost') && $borrow->hasOutstandingFine() ? 'ring-1 ring-rose-200' : '' }}">
             <div class="grid gap-4 p-5 lg:grid-cols-[96px_1fr] lg:items-center">
                 <div class="flex h-28 w-24 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 via-white to-blue-50 shadow-sm">
                     @if($borrow->book->cover_image || $borrow->book->cover_url)
@@ -140,14 +155,40 @@
                             <i class="ti ti-hourglass text-xs"></i>
                             Durasi: {{ $borrow->loan_period_label }}
                         </span>
-                        @if($borrow->fine_amount > 0)
+                        @if($borrow->hasOutstandingFine())
                         <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-700">
                             <i class="ti ti-report-money text-xs"></i>
                             @if($borrow->status === 'lost')
-                                Denda hilang: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
+                                Denda hilang belum lunas: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
                             @else
-                                Denda terlambat: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
+                                Denda terlambat belum lunas: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
                             @endif
+                        </span>
+                        @elseif($borrow->fine_amount > 0)
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                            <i class="ti ti-badge-check text-xs"></i>
+                            Denda lunas: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
+                        </span>
+                        @endif
+                        @if($borrow->hasOutstandingFine() && !$borrow->hasFineProof())
+                        <div class="w-full rounded-2xl border border-dashed border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                            <div class="flex items-start gap-3">
+                                <i class="ti ti-upload text-lg text-amber-600"></i>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-amber-900">Kirim bukti pembayaran denda</div>
+                                    <p class="mt-1 leading-6">Unggah bukti transfer atau foto pembayaran agar admin bisa memverifikasi dan menutup peringatan denda.</p>
+                                    <form method="POST" action="{{ route('member.history.fine-proof', $borrow) }}" enctype="multipart/form-data" class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                                        @csrf
+                                        <input type="file" name="fine_proof" accept=".jpg,.jpeg,.png,.pdf" class="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-amber-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-amber-800 hover:file:bg-amber-200 sm:max-w-sm">
+                                        <button type="submit" class="member-primary-btn inline-flex justify-center sm:w-auto">Kirim Bukti</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @elseif($borrow->hasOutstandingFine() && $borrow->hasFineProof())
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700">
+                            <i class="ti ti-receipt text-xs"></i>
+                            Bukti pembayaran terkirim, menunggu verifikasi admin
                         </span>
                         @endif
                         @if($borrow->return_date)
@@ -156,7 +197,7 @@
                             Dikembalikan: {{ $borrow->return_date->format('d M Y') }}
                         </span>
                         @endif
-                        @if($borrow->status === 'lost')
+                        @if($borrow->status === 'lost' && $borrow->hasOutstandingFine())
                         <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 font-semibold text-rose-700">
                             <i class="ti ti-badge-off text-xs"></i>
                             Buku ditandai hilang

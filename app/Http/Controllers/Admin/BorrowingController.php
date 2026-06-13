@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\Borrowing;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BorrowingController extends Controller
 {
@@ -40,6 +41,14 @@ class BorrowingController extends Controller
             'overdue'  => Borrowing::where('status', 'overdue')->count(),
             'lost'     => Borrowing::where('status', 'lost')->count(),
             'returned' => Borrowing::where('status', 'returned')->count(),
+            'fine_pending' => Borrowing::whereIn('status', ['returned', 'lost'])
+                ->where('penalty_amount', '>', 0)
+                ->whereNull('fine_settled_at')
+                ->count(),
+            'fine_settled' => Borrowing::whereIn('status', ['returned', 'lost'])
+                ->where('penalty_amount', '>', 0)
+                ->whereNotNull('fine_settled_at')
+                ->count(),
         ];
 
         return view('admin.borrowings.index', compact('borrowings', 'counts'));
@@ -109,5 +118,39 @@ class BorrowingController extends Controller
         ]);
 
         return back()->with('success', 'Buku berhasil ditandai hilang dan denda tetap sudah dihitung.');
+    }
+
+    public function settleFine(Borrowing $borrowing)
+    {
+        if (!in_array($borrowing->status, ['returned', 'lost'], true)) {
+            return back()->with('error', 'Denda hanya bisa dilunasi untuk peminjaman yang sudah selesai atau hilang.');
+        }
+
+        if ($borrowing->fine_amount <= 0) {
+            return back()->with('error', 'Peminjaman ini tidak memiliki denda.');
+        }
+
+        if (!$borrowing->hasFineProof()) {
+            return back()->with('error', 'Bukti pembayaran belum diunggah member.');
+        }
+
+        if ($borrowing->isFineSettled()) {
+            return back()->with('info', 'Denda sudah pernah ditandai lunas.');
+        }
+
+        $borrowing->update([
+            'fine_settled_at' => now(),
+        ]);
+
+        return back()->with('success', 'Denda berhasil ditandai lunas.');
+    }
+
+    public function viewFineProof(Borrowing $borrowing)
+    {
+        if (!$borrowing->hasFineProof()) {
+            return back()->with('error', 'Bukti pembayaran belum tersedia.');
+        }
+
+        return response()->file(Storage::disk('public')->path($borrowing->fine_proof_path));
     }
 }
