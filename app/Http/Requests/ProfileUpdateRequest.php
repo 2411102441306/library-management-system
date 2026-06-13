@@ -18,6 +18,18 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'identity_number' => [
+                'required',
+                'string',
+                'max:32',
+                Rule::unique(User::class, 'identity_number')->ignore($this->user()->id),
+            ],
+            'phone' => ['required', 'string', 'max:30'],
+            'address' => ['required', 'string', 'max:500'],
+            'birth_place' => ['required', 'string', 'max:120'],
+            'birth_date' => ['required', 'date', 'before:today'],
+            'profile_photo' => ['nullable', 'image', 'max:2048'],
+            'remove_profile_photo' => ['nullable', 'boolean'],
             'email' => [
                 'required',
                 'string',

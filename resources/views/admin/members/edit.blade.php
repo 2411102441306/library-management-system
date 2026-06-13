@@ -26,6 +26,21 @@
                     <input type="text" name="phone" value="{{ old('phone', $user->phone) }}"
                         class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">NIK / Nomor Identitas</label>
+                    <input type="text" name="identity_number" value="{{ old('identity_number', $user->identity_number) }}"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Tempat Lahir</label>
+                    <input type="text" name="birth_place" value="{{ old('birth_place', $user->birth_place) }}"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">Tanggal Lahir</label>
+                    <input type="date" name="birth_date" value="{{ old('birth_date', optional($user->birth_date)->format('Y-m-d')) }}"
+                        class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400">
+                </div>
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5">Alamat</label>
                     <textarea name="address" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400 resize-none">{{ old('address', $user->address) }}</textarea>

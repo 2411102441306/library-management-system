@@ -48,11 +48,11 @@
                     <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider w-12">Cover</th>
                     <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Judul Buku</th>
                     <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Pengarang</th>
-                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori</th>
+                    <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">Kategori</th>
                     <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Stok</th>
                     <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                     <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Aksi</th>
-                </tr>
+                </tr>z
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse($books as $book)
@@ -74,7 +74,7 @@
                     <td class="px-5 py-4 text-sm text-slate-600">{{ $book->author }}</td>
                     <td class="px-5 py-4">
                         <span class="text-xs px-2.5 py-1 rounded-full font-medium" style="background:#E0F2FE;color:#0369A1">
-                            {{ $book->category->name ?? '-' }}
+                             {{ $book->category->name ?? '-' }}
                         </span>
                     </td>
                     <td class="px-5 py-4 text-sm text-slate-700 font-medium">{{ $book->stock }}</td>

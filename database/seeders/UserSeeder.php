@@ -18,6 +18,9 @@ class UserSeeder extends Seeder
             'role'     => 'admin',
             'phone'    => '081234567890',
             'address'  => 'Jl. Pendidikan No. 1, Samarinda',
+            'identity_number' => '1000000000000001',
+            'birth_place' => 'Samarinda',
+            'birth_date'  => '1990-01-01',
         ]);
 
         // Members
@@ -30,12 +33,18 @@ class UserSeeder extends Seeder
             ['name' => 'Satriani',     'email' => '2411102441122@umkt.ac.id'],
         ];
 
-        foreach ($members as $member) {
+        foreach ($members as $index => $member) {
+            $identityNumber = sprintf('200000000000%04d', $index + 1);
             User::create([
                 'name'     => $member['name'],
                 'email'    => $member['email'],
                 'password' => Hash::make('password'),
                 'role'     => 'member',
+                'phone'    => '0812' . rand(10000000, 99999999),
+                'address'  => 'Alamat belum diisi',
+                'identity_number' => $identityNumber,
+                'birth_place' => 'Samarinda',
+                'birth_date'  => '2000-01-01',
             ]);
         }
 
@@ -45,6 +54,11 @@ class UserSeeder extends Seeder
             'email'    => 'member@library.id',
             'password' => Hash::make('password'),
             'role'     => 'member',
+            'phone'    => '081234567891',
+            'address'  => 'Jl. Buku No. 2, Samarinda',
+            'identity_number' => '2000000000000010',
+            'birth_place' => 'Samarinda',
+            'birth_date'  => '2001-02-03',
         ]);
     }
 }

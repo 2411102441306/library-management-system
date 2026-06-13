@@ -24,6 +24,7 @@ class BorrowingHistoryController extends Controller
             'pending'  => Borrowing::where('user_id', auth()->id())->where('status', 'pending')->count(),
             'approved' => Borrowing::where('user_id', auth()->id())->where('status', 'approved')->count(),
             'overdue'  => Borrowing::where('user_id', auth()->id())->where('status', 'overdue')->count(),
+            'lost'     => Borrowing::where('user_id', auth()->id())->where('status', 'lost')->count(),
             'returned' => Borrowing::where('user_id', auth()->id())->where('status', 'returned')->count(),
         ];
 

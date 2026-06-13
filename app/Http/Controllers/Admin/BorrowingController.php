@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Borrowing;
 use Illuminate\Http\Request;
 
@@ -10,6 +11,8 @@ class BorrowingController extends Controller
 {
     public function index(Request $request)
     {
+        Borrowing::refreshOverdueStatuses();
+
         $query = Borrowing::with(['user', 'book']);
 
         if ($request->status && $request->status !== 'all') {
@@ -17,17 +20,16 @@ class BorrowingController extends Controller
         }
 
         if ($request->search) {
-            $query->whereHas('user', fn($q) =>
-                $q->where('name', 'like', '%' . $request->search . '%')
-            )->orWhereHas('book', fn($q) =>
-                $q->where('title', 'like', '%' . $request->search . '%')
-            );
-        }
+            $search = $request->search;
 
-        // Auto-update overdue
-        Borrowing::where('status', 'approved')
-            ->where('due_date', '<', now())
-            ->update(['status' => 'overdue']);
+            $query->where(function ($nested) use ($search) {
+                $nested->whereHas('user', fn($q) =>
+                    $q->where('name', 'like', '%' . $search . '%')
+                )->orWhereHas('book', fn($q) =>
+                    $q->where('title', 'like', '%' . $search . '%')
+                );
+            });
+        }
 
         $borrowings = $query->latest()->paginate(10)->withQueryString();
 
@@ -36,6 +38,7 @@ class BorrowingController extends Controller
             'pending'  => Borrowing::where('status', 'pending')->count(),
             'approved' => Borrowing::where('status', 'approved')->count(),
             'overdue'  => Borrowing::where('status', 'overdue')->count(),
+            'lost'     => Borrowing::where('status', 'lost')->count(),
             'returned' => Borrowing::where('status', 'returned')->count(),
         ];
 
@@ -53,7 +56,11 @@ class BorrowingController extends Controller
             return back()->with('error', 'Stok buku tidak tersedia.');
         }
 
-        $borrowing->update(['status' => 'approved']);
+        $borrowing->update([
+            'status'      => 'approved',
+            'borrow_date' => now()->toDateString(),
+            'due_date'    => now()->addDays($borrowing->loan_days ?: AppSetting::borrowingPolicy()['default_days'])->toDateString(),
+        ]);
 
         // Kurangi stok buku
         $borrowing->book->decrement('stock');
@@ -81,11 +88,26 @@ class BorrowingController extends Controller
         $borrowing->update([
             'status'      => 'returned',
             'return_date' => now()->toDateString(),
+            'penalty_amount' => $borrowing->days_late * AppSetting::borrowingPolicy()['daily_fine'],
         ]);
 
         // Kembalikan stok buku
         $borrowing->book->increment('stock');
 
         return back()->with('success', 'Buku berhasil ditandai dikembalikan.');
+    }
+
+    public function markLost(Borrowing $borrowing)
+    {
+        if (!in_array($borrowing->status, ['approved', 'overdue'])) {
+            return back()->with('error', 'Status peminjaman tidak valid untuk ditandai hilang.');
+        }
+
+        $borrowing->update([
+            'status'         => 'lost',
+            'penalty_amount' => AppSetting::borrowingPolicy()['lost_fee'],
+        ]);
+
+        return back()->with('success', 'Buku berhasil ditandai hilang dan denda tetap sudah dihitung.');
     }
 }

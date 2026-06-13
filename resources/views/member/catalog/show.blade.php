@@ -72,12 +72,48 @@
                         <i class="ti ti-info-circle"></i>
                         Kamu sudah meminjam buku ini dan belum mengembalikannya.
                     </div>
+                @elseif(!empty($missingProfileFields))
+                    <div class="p-4 rounded-xl border border-amber-200 bg-amber-50 mb-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-9 h-9 rounded-full flex items-center justify-center bg-amber-100 text-amber-700 flex-shrink-0">
+                                <i class="ti ti-id"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-amber-900">Profil belum lengkap</div>
+                                <p class="text-sm text-amber-800 mt-1">
+                                    Untuk mengurangi risiko peminjaman yang salah, lengkapi dulu: {{ implode(', ', $missingProfileFields) }}.
+                                </p>
+                                <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1 mt-3 text-sm font-medium text-amber-900 underline underline-offset-2">
+                                    Lengkapi profil sekarang
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 @elseif($book->stock <= 0)
                     <div class="flex items-center gap-2 p-3 rounded-xl text-sm mb-3" style="background:#FEE2E2;color:#B91C1C">
                         <i class="ti ti-alert-circle"></i>
                         Stok buku sedang tidak tersedia.
                     </div>
                 @else
+                    <div class="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                                <i class="ti ti-alert-triangle"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-rose-900">Perhatian biaya keterlambatan</div>
+                                <p class="mt-1 text-sm leading-6 text-rose-800">
+                                    Denda dihitung per hari, jadi kalau telat 1 hari akan menjadi Rp {{ number_format($borrowPolicy['daily_fine'], 0, ',', '.') }}, 2 hari menjadi Rp {{ number_format($borrowPolicy['daily_fine'] * 2, 0, ',', '.') }}, dan bila buku hilang denda tetap sebesar Rp {{ number_format($borrowPolicy['lost_fee'], 0, ',', '.') }}.
+                                </p>
+                                <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                                    <span class="rounded-full bg-white px-3 py-1 text-rose-700 ring-1 ring-rose-200">1 hari telat = Rp {{ number_format($borrowPolicy['daily_fine'], 0, ',', '.') }}</span>
+                                    <span class="rounded-full bg-white px-3 py-1 text-rose-700 ring-1 ring-rose-200">2 hari telat = Rp {{ number_format($borrowPolicy['daily_fine'] * 2, 0, ',', '.') }}</span>
+                                    <span class="rounded-full bg-white px-3 py-1 text-rose-700 ring-1 ring-rose-200">Hilang = Rp {{ number_format($borrowPolicy['lost_fee'], 0, ',', '.') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <form method="POST" action="{{ route('member.catalog.borrow', $book) }}">
                         @csrf
                         <div class="mb-3">
@@ -85,8 +121,16 @@
                             <input type="text" name="notes" placeholder="Tambahkan catatan untuk admin..."
                                 class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400">
                         </div>
+                        <div class="mb-3">
+                            <label class="block text-xs text-slate-500 mb-1">Durasi pinjam</label>
+                            <select name="loan_days" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-sky-400">
+                                @for($days = $borrowPolicy['min_days']; $days <= $borrowPolicy['max_days']; $days++)
+                                    <option value="{{ $days }}" @selected(old('loan_days', $borrowPolicy['default_days']) == $days)>{{ $days }} hari</option>
+                                @endfor
+                            </select>
+                        </div>
                         <div class="text-xs text-slate-400 mb-3">
-                            <i class="ti ti-clock text-xs"></i> Durasi peminjaman: 7 hari
+                            <i class="ti ti-clock text-xs"></i> Durasi peminjaman: {{ $borrowPolicy['min_days'] }}-{{ $borrowPolicy['max_days'] }} hari. Tenggat dihitung sejak pengajuan dan admin dapat memantau sisa waktu secara langsung.
                         </div>
                         <button type="submit" class="w-full py-3 rounded-xl text-white font-medium text-sm hover:opacity-90" style="background:#0EA5E9">
                             <i class="ti ti-clipboard-plus mr-1"></i> Ajukan Peminjaman

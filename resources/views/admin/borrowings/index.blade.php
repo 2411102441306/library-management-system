@@ -12,6 +12,7 @@
                 'pending'  => ['label' => 'Menunggu', 'count' => $counts['pending']],
                 'approved' => ['label' => 'Aktif',    'count' => $counts['approved']],
                 'overdue'  => ['label' => 'Terlambat','count' => $counts['overdue']],
+                'lost'     => ['label' => 'Hilang',   'count' => $counts['lost']],
                 'returned' => ['label' => 'Selesai',  'count' => $counts['returned']],
             ];
         @endphp
@@ -46,9 +47,13 @@
                     <tr class="border-b border-slate-100 bg-slate-50/75">
                         <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase">Anggota</th>
                         <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase">Buku</th>
-                        <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-32">Tgl. Pinjam</th>
+                        <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-36">Diajukan</th>
+                        <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-24">Durasi</th>
                         <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-32">Jatuh Tempo</th>
+                        <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-28">Sisa / Telat</th>
+                        <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-32">Denda</th>
                         <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-28">Status</th>
+                        <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-28">Peringatan</th>
                         <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-52">Catatan</th>
                         <th class="text-left px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase w-40">Aksi</th>
                     </tr>
@@ -58,9 +63,7 @@
                     <tr class="hover:bg-slate-50/60 transition-colors align-middle">
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-2.5">
-                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0" style="background:#E0F2FE;color:#0EA5E9">
-                                    {{ strtoupper(substr($borrow->user->name, 0, 2)) }}
-                                </div>
+                                <x-user-avatar :user="$borrow->user" size="sm" class="flex-shrink-0" />
                                 <span class="text-sm font-medium text-slate-700">{{ $borrow->user->name }}</span>
                             </div>
                         </td>
@@ -74,10 +77,30 @@
                             </div>
                         </td>
                         
-                        <td class="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">{{ $borrow->borrow_date->format('d M Y') }}</td>
+                        <td class="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">{{ $borrow->created_at->format('d M Y H:i') }}</td>
+
+                        <td class="px-5 py-4 text-sm text-slate-600 whitespace-nowrap">{{ $borrow->loan_period_label }}</td>
                         
                         <td class="px-5 py-4 text-sm whitespace-nowrap {{ $borrow->isOverdue() ? 'font-semibold' : 'text-slate-600' }}" style="{{ $borrow->isOverdue() ? 'color:#EF4444' : '' }}">
                             {{ $borrow->due_date->format('d M Y') }}
+                        </td>
+
+                        <td class="px-5 py-4 text-sm whitespace-nowrap {{ ($borrow->isOverdue() || $borrow->status === 'lost') ? 'font-semibold' : 'text-slate-600' }}" style="{{ ($borrow->isOverdue() || $borrow->status === 'lost') ? 'color:#EF4444' : '' }}">
+                            @if($borrow->isOverdue())
+                                {{ $borrow->days_late }} hari terlambat
+                            @elseif($borrow->status === 'lost')
+                                Hilang
+                            @else
+                                {{ $borrow->days_remaining }} hari lagi
+                            @endif
+                        </td>
+
+                        <td class="px-5 py-4 text-sm whitespace-nowrap {{ $borrow->fine_amount > 0 ? 'font-semibold' : 'text-slate-500' }}" style="{{ $borrow->fine_amount > 0 ? 'color:#B91C1C' : '' }}">
+                            @if($borrow->fine_amount > 0)
+                                {{ $borrow->status === 'lost' ? 'Denda hilang' : 'Denda terlambat' }}: Rp {{ number_format($borrow->fine_amount, 0, ',', '.') }}
+                            @else
+                                -
+                            @endif
                         </td>
                         
                         <td class="px-5 py-4">
@@ -86,11 +109,33 @@
                                     'approved' => ['#DCFCE7','#15803D','Aktif'],
                                     'pending'  => ['#FEF3C7','#B45309','Menunggu'],
                                     'overdue'  => ['#FEE2E2','#B91C1C','Terlambat'],
+                                    'lost'     => ['#FEE2E2','#B91C1C','Hilang'],
                                     'returned' => ['#DBEAFE','#1D4ED8','Selesai'],
                                     default    => ['#F3F4F6','#6B7280','Ditolak'],
                                 };
                             @endphp
                             <span class="text-xs px-2.5 py-1 rounded-full font-medium inline-block whitespace-nowrap" style="background:{{ $cfg[0] }};color:{{ $cfg[1] }}">{{ $cfg[2] }}</span>
+                        </td>
+
+                        <td class="px-5 py-4 text-sm whitespace-nowrap">
+                            @if($borrow->due_soon_warning)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                                    <i class="ti ti-alert-triangle text-xs"></i>
+                                    Hampir jatuh tempo
+                                </span>
+                            @elseif($borrow->status === 'lost')
+                                <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                                    <i class="ti ti-badge-off text-xs"></i>
+                                    Buku hilang
+                                </span>
+                            @elseif($borrow->isOverdue())
+                                <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                                    <i class="ti ti-alert-triangle text-xs"></i>
+                                    Telat
+                                </span>
+                            @else
+                                <span class="text-xs text-slate-400">-</span>
+                            @endif
                         </td>
                         
                         <td class="px-5 py-4 text-sm text-slate-500 max-w-[200px]">
@@ -121,6 +166,10 @@
                                         @csrf @method('PATCH')
                                         <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all hover:bg-sky-50 shadow-sm whitespace-nowrap" style="border-color:#0EA5E9;color:#0EA5E9">Tandai Kembali</button>
                                     </form>
+                                    <form method="POST" action="{{ route('admin.borrowings.lost', $borrow) }}">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all hover:bg-rose-50 shadow-sm whitespace-nowrap" style="border-color:#EF4444;color:#EF4444">Tandai Hilang</button>
+                                    </form>
                                 @else
                                     <span class="text-xs font-medium text-slate-400 bg-slate-100 px-2.5 py-1 rounded whitespace-nowrap">Selesai</span>
                                 @endif
@@ -129,7 +178,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-12 text-slate-400">
+                        <td colspan="10" class="text-center py-12 text-slate-400">
                             <i class="ti ti-clipboard-list text-4xl block mb-2 text-slate-300"></i>
                             <div class="text-sm font-medium">Tidak ada data peminjaman</div>
                         </td>

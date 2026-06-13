@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Book;
 use App\Models\Category;
 use App\Models\Borrowing;
@@ -35,20 +36,38 @@ class CatalogController extends Controller
 
     public function show(Book $book)
     {
+        $user = auth()->user();
+        $borrowPolicy = AppSetting::borrowingPolicy();
+
         // Cek apakah member sudah meminjam buku ini dan belum dikembalikan
         $alreadyBorrowed = Borrowing::where('user_id', auth()->id())
             ->where('book_id', $book->id)
             ->whereIn('status', ['pending', 'approved', 'overdue'])
             ->exists();
 
-        return view('member.catalog.show', compact('book', 'alreadyBorrowed'));
+        $missingProfileFields = $user->missingBorrowerProfileFields();
+
+        return view('member.catalog.show', compact('book', 'alreadyBorrowed', 'missingProfileFields', 'borrowPolicy'));
     }
 
     public function borrow(Request $request, Book $book)
     {
+        $user = $request->user();
+        $borrowPolicy = AppSetting::borrowingPolicy();
+
+        $validated = $request->validate([
+            'notes'     => ['nullable', 'string', 'max:1000'],
+            'loan_days' => ['nullable', 'integer', 'min:' . $borrowPolicy['min_days'], 'max:' . $borrowPolicy['max_days']],
+        ]);
+        $loanDays = $validated['loan_days'] ?? $borrowPolicy['default_days'];
+
         // Validasi stok
         if ($book->stock <= 0) {
             return back()->with('error', 'Stok buku tidak tersedia.');
+        }
+
+        if (!$user->hasBorrowerProfile()) {
+            return back()->with('error', 'Lengkapi profil dulu: ' . implode(', ', $user->missingBorrowerProfileFields()) . '.');
         }
 
         // Cek apakah sudah meminjam
@@ -74,9 +93,10 @@ class CatalogController extends Controller
             'user_id'     => auth()->id(),
             'book_id'     => $book->id,
             'borrow_date' => now()->toDateString(),
-            'due_date'    => now()->addDays(7)->toDateString(),
+            'due_date'    => now()->addDays($loanDays)->toDateString(),
+            'loan_days'   => $loanDays,
             'status'      => 'pending',
-            'notes'       => $request->notes,
+            'notes'       => $validated['notes'] ?? null,
         ]);
 
         return redirect()->route('member.history')

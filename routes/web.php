@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Member;
+use App\Http\Controllers\ProfileController;
 
 // ─── Root redirect berdasarkan role ────────────────────────
 Route::get('/', function () {
@@ -16,6 +17,13 @@ Route::get('/', function () {
 
 // ─── Auth routes (bawaan Breeze) ───────────────────────────
 require __DIR__ . '/auth.php';
+
+// ─── Profile routes ───────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 // ─── ADMIN routes ──────────────────────────────────────────
 Route::prefix('admin')
@@ -46,6 +54,8 @@ Route::prefix('admin')
             ->name('borrowings.reject');
         Route::patch('/borrowings/{borrowing}/return', [Admin\BorrowingController::class, 'markReturned'])
             ->name('borrowings.return');
+        Route::patch('/borrowings/{borrowing}/lost', [Admin\BorrowingController::class, 'markLost'])
+            ->name('borrowings.lost');
 
         // Kategori
         Route::get('/categories', [Admin\CategoryController::class, 'index'])
@@ -62,8 +72,10 @@ Route::prefix('admin')
             ->name('reports.index');
 
         // Pengaturan
-        Route::get('/settings', fn() => view('admin.settings'))
+        Route::get('/settings', [Admin\SettingsController::class, 'edit'])
             ->name('settings');
+        Route::put('/settings', [Admin\SettingsController::class, 'update'])
+            ->name('settings.update');
     });
 
 // ─── MEMBER routes ─────────────────────────────────────────

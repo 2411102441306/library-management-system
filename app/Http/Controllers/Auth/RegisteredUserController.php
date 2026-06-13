@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Book;
+use App\Models\Borrowing;
+use App\Models\Category;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +23,12 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('auth.register');
+        $totalBooks = Book::count();
+        $activeMembers = User::where('role', 'member')->count();
+        $borrowed = Borrowing::whereIn('status', ['approved', 'overdue'])->count();
+        $categories = Category::count();
+
+        return view('auth.register', compact('totalBooks', 'activeMembers', 'borrowed', 'categories'));
     }
 
     /**

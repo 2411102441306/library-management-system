@@ -7,7 +7,7 @@
 <div class="pt-2">
 
     <!-- Stat Cards -->
-    <div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
         <div class="bg-white rounded-xl border border-slate-200 p-5">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:#E0F2FE">
                 <i class="ti ti-books text-xl" style="color:#0EA5E9"></i>
@@ -48,6 +48,16 @@
                 <i class="ti ti-alert-triangle"></i> butuh perhatian
             </div>
         </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style="background:#FEF3C7">
+                <i class="ti ti-id text-xl" style="color:#B45309"></i>
+            </div>
+            <div class="text-2xl font-bold text-slate-800">{{ number_format($incompleteProfiles) }}</div>
+            <div class="text-sm text-slate-500 mt-0.5">Profil Belum Lengkap</div>
+            <div class="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                <i class="ti ti-user-check"></i> perlu diselesaikan
+            </div>
+        </div>
     </div>
 
     <!-- Chart + Recent -->
@@ -69,9 +79,7 @@
             </div>
             @forelse($recentBorrowings as $borrow)
             <div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
-                <div class="w-9 h-11 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#E0F2FE">
-                    <i class="ti ti-book text-base" style="color:#0EA5E9"></i>
-                </div>
+                <x-user-avatar :user="$borrow->user" size="md" class="flex-shrink-0" />
                 <div class="flex-1 min-w-0">
                     <div class="text-sm font-medium text-slate-800 truncate">{{ $borrow->book->title }}</div>
                     <div class="text-xs text-slate-500">{{ $borrow->user->name }} · {{ $borrow->due_date->format('d M Y') }}</div>
@@ -92,6 +100,50 @@
             </div>
             @empty
             <div class="text-center py-6 text-slate-400 text-sm">Belum ada peminjaman</div>
+            @endforelse
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-700">Perlu Ditindaklanjuti</h3>
+                <a href="{{ route('admin.borrowings.index', ['status' => 'approved']) }}" class="text-xs font-medium" style="color:#0EA5E9">Lihat aktif</a>
+            </div>
+            @forelse($dueSoonBorrows as $borrow)
+                <div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
+                    <x-user-avatar :user="$borrow->user" size="md" class="flex-shrink-0" />
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-slate-800 truncate">{{ $borrow->book->title }}</div>
+                        <div class="text-xs text-slate-500">{{ $borrow->user->name }} · {{ $borrow->due_date->format('d M Y') }}</div>
+                    </div>
+                    <span class="text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0" style="background:#FEF3C7;color:#B45309">
+                        {{ $borrow->days_remaining }} hari lagi
+                    </span>
+                </div>
+            @empty
+                <div class="text-center py-6 text-slate-400 text-sm">Tidak ada pinjaman jatuh tempo dalam 2 hari ke depan</div>
+            @endforelse
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-700">Pinjaman Terlambat</h3>
+                <a href="{{ route('admin.borrowings.index', ['status' => 'overdue']) }}" class="text-xs font-medium" style="color:#0EA5E9">Lihat terlambat</a>
+            </div>
+            @forelse($overdueBorrowings as $borrow)
+            <div class="flex items-center gap-3 py-2.5 border-b border-slate-100 last:border-0">
+                <x-user-avatar :user="$borrow->user" size="md" class="flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-slate-800 truncate">{{ $borrow->book->title }}</div>
+                    <div class="text-xs text-slate-500">{{ $borrow->user->name }} · {{ $borrow->due_date->format('d M Y') }}</div>
+                </div>
+                <span class="text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0" style="background:#FEE2E2;color:#B91C1C">
+                    {{ $borrow->days_late }} hari terlambat
+                </span>
+            </div>
+            @empty
+            <div class="text-center py-6 text-slate-400 text-sm">Belum ada pinjaman terlambat</div>
             @endforelse
         </div>
     </div>
@@ -119,6 +171,8 @@
 
 @push('scripts')
 <script>
+const dashboardRefreshInterval = 30000;
+
 const ctx = document.getElementById('borrowChart').getContext('2d');
 new Chart(ctx, {
     type: 'bar',
@@ -143,5 +197,9 @@ new Chart(ctx, {
         }
     }
 });
+
+setTimeout(() => {
+    window.setInterval(() => window.location.reload(), dashboardRefreshInterval);
+}, 0);
 </script>
 @endpush

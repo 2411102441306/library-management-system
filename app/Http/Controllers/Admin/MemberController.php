@@ -29,15 +29,18 @@ class MemberController extends Controller
         return view('admin.members.index', compact('members'));
     }
 
-    public function show(User $user)
+    public function show(User $member)
     {
-        $borrowings = $user->borrowings()
+        $borrowings = $member->borrowings()
             ->with('book')
             ->latest()
             ->take(10)
             ->get();
 
-        return view('admin.members.show', compact('user', 'borrowings'));
+        return view('admin.members.show', [
+            'user' => $member,
+            'borrowings' => $borrowings,
+        ]);
     }
 
     public function create()
@@ -53,6 +56,9 @@ class MemberController extends Controller
             'password' => 'required|min:8|confirmed',
             'phone'    => 'nullable|string|max:20',
             'address'  => 'nullable|string',
+            'identity_number' => 'nullable|string|max:32|unique:users,identity_number',
+            'birth_place' => 'nullable|string|max:120',
+            'birth_date'  => 'nullable|date|before:today',
         ]);
 
         $validated['role']     = 'member';
@@ -64,33 +70,38 @@ class MemberController extends Controller
             ->with('success', 'Anggota berhasil ditambahkan.');
     }
 
-    public function edit(User $user)
+    public function edit(User $member)
     {
-        return view('admin.members.edit', compact('user'));
+        return view('admin.members.edit', [
+            'user' => $member,
+        ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $member)
     {
         $validated = $request->validate([
             'name'    => 'required|string|max:255',
-            'email'   => 'required|email|unique:users,email,' . $user->id,
+            'email'   => 'required|email|unique:users,email,' . $member->id,
             'phone'   => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'identity_number' => 'nullable|string|max:32|unique:users,identity_number,' . $member->id,
+            'birth_place' => 'nullable|string|max:120',
+            'birth_date'  => 'nullable|date|before:today',
         ]);
 
-        $user->update($validated);
+        $member->update($validated);
 
         return redirect()->route('admin.members.index')
             ->with('success', 'Data anggota berhasil diperbarui.');
     }
 
-    public function destroy(User $user)
+    public function destroy(User $member)
     {
-        if ($user->borrowings()->whereIn('status', ['pending', 'approved', 'overdue'])->exists()) {
+        if ($member->borrowings()->whereIn('status', ['pending', 'approved', 'overdue'])->exists()) {
             return back()->with('error', 'Anggota tidak dapat dihapus karena masih memiliki peminjaman aktif.');
         }
 
-        $user->delete();
+        $member->delete();
 
         return redirect()->route('admin.members.index')
             ->with('success', 'Anggota berhasil dihapus.');

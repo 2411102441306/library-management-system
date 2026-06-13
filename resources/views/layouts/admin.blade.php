@@ -83,9 +83,7 @@
         <!-- User -->
         <div class="px-3 py-3 border-t border-white/15">
             <div class="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-white/10 cursor-pointer">
-                <div class="w-8 h-8 rounded-full bg-white/25 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
-                </div>
+                <x-user-avatar :user="auth()->user()" size="sm" class="border border-white/20 flex-shrink-0" />
                 <div class="flex-1 min-w-0">
                     <div class="text-white text-xs font-medium truncate">{{ auth()->user()->name }}</div>
                     <div class="text-white/60 text-xs truncate">{{ auth()->user()->email }}</div>
